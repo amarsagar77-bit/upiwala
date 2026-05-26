@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PayZap — UPI Payments</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --p:#6C3CE1;--pl:#8B5CF6;--pd:#4C1D95;--pbg:#F3EEFF;--plg:#EDE9FE;
+  --g:#059669;--gbg:#ECFDF5;
+  --r:#DC2626;--rbg:#FEF2F2;
+  --o:#D97706;--obg:#FFFBEB;
+  --b:#2563EB;--bbg:#EFF6FF;
+  --bg:#F8F7FF;--card:#fff;--border:#E5E0F8;
+  --t1:#1A1033;--t2:#6B5FA0;--t3:#A99CC8;
+  --shadow:0 4px 24px rgba(108,60,225,0.10);
+  --rad:16px;--radSm:10px;--radFull:999px;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden}
+button{font-family:var(--font);cursor:pointer;border:none;outline:none}
+input{font-family:var(--font);outline:none}
+
+/* ── SHELL ── */
+.shell{display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:20px}
+.phone{width:390px;min-height:780px;background:var(--card);border-radius:40px;
+  box-shadow:0 0 0 1px var(--border),var(--shadow),0 32px 80px rgba(108,60,225,0.15);
+  overflow:hidden;display:flex;flex-direction:column;position:relative}
+.screen{display:none;flex-direction:column;flex:1;overflow-y:auto;overflow-x:hidden}
+.screen.active{display:flex}
+.screen::-webkit-scrollbar{display:none}
+
+/* ── STATUS BAR ── */
+.statusbar{height:44px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;font-size:12px;font-weight:600;color:var(--t1)}
+.statusbar.light{color:#fff}
+.sb-right{display:flex;gap:6px;align-items:center}
+
+/* ── GRADIENTS ── */
+.grad-header{background:linear-gradient(145deg,#4C1D95 0%,#6C3CE1 50%,#8B5CF6 100%);padding:28px 24px 40px}
+.grad-header h2{color:#fff;font-size:20px;font-weight:600}
+.grad-header p{color:rgba(255,255,255,.7);font-size:13px;margin-top:4px}
+
+/* ── BOTTOM NAV ── */
+.nav{height:72px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;background:#fff;flex-shrink:0;padding:0 8px}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 16px;border-radius:var(--radSm);cursor:pointer;transition:.15s;flex:1}
+.nav-item:hover{background:var(--pbg)}
+.nav-item.active .nav-icon{color:var(--p)}
+.nav-item.active .nav-label{color:var(--p)}
+.nav-icon{font-size:20px;color:var(--t3);transition:.15s}
+.nav-label{font-size:10px;font-weight:600;color:var(--t3);transition:.15s}
+.nav-scan{width:52px;height:52px;background:linear-gradient(135deg,var(--p),var(--pl));border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(108,60,225,.4);margin-top:-20px}
+.nav-scan svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+
+/* ── BUTTONS ── */
+.btn{padding:14px 24px;border-radius:var(--radFull);font-size:15px;font-weight:600;text-align:center;transition:.15s;cursor:pointer;border:none;width:100%}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--p);color:#fff;box-shadow:0 4px 16px rgba(108,60,225,.3)}
+.btn-primary:hover{background:var(--pd)}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--t1)}
+.btn-outline:hover{background:var(--pbg);border-color:var(--p);color:var(--p)}
+.btn-ghost{background:var(--pbg);color:var(--p)}
+.btn-sm{padding:9px 18px;font-size:13px;font-weight:600}
+.btn-danger{background:var(--r);color:#fff}
+
+/* ── CARDS ── */
+.card{background:#fff;border-radius:var(--rad);border:1px solid var(--border);padding:20px}
+.card-sm{padding:14px 16px}
+
+/* ── INPUTS ── */
+.inp-wrap{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;display:flex;align-items:center;padding:0 14px;gap:10px;transition:.15s}
+.inp-wrap:focus-within{border-color:var(--p);background:#fff;box-shadow:0 0 0 3px rgba(108,60,225,.1)}
+.inp-wrap input{flex:1;padding:14px 0;font-size:15px;background:none;border:none;color:var(--t1)}
+.inp-wrap input::placeholder{color:var(--t3)}
+.inp-wrap svg{width:18px;height:18px;stroke:var(--t3);flex-shrink:0;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.field-label{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--radFull);font-size:11px;font-weight:600}
+.badge-green{background:var(--gbg);color:#065F46}
+.badge-red{background:var(--rbg);color:#991B1B}
+.badge-purple{background:var(--pbg);color:var(--pd)}
+.badge-orange{background:var(--obg);color:#92400E}
+.badge-blue{background:var(--bbg);color:#1E40AF}
+
+/* ── AVATAR ── */
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.av-44{width:44px;height:44px;font-size:14px}
+.av-52{width:52px;height:52px;font-size:16px}
+.av-64{width:64px;height:64px;font-size:20px}
+
+/* ── PIN DOTS ── */
+.pin-dots{display:flex;gap:14px;justify-content:center;margin:28px 0}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:.2s}
+.pin-dot.filled{background:var(--p);border-color:var(--p)}
+.pin-dot.shake{animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ── KEYPAD ── */
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:0 24px}
+.kkey{padding:18px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:300;color:var(--t1);border-radius:var(--radSm);cursor:pointer;transition:.1s;user-select:none}
+.kkey:active{background:var(--pbg);color:var(--p)}
+.kkey.empty{opacity:0;pointer-events:none}
+
+/* ── TXN ITEM ── */
+.txn-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.txn-item:last-child{border-bottom:none}
+.txn-icon{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.txn-info{flex:1;min-width:0}
+.txn-name{font-size:14px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.txn-meta{font-size:12px;color:var(--t3);margin-top:2px}
+.txn-amt{text-align:right}
+.txn-amt .amt{font-size:15px;font-weight:700}
+.txn-amt .out{color:var(--r)}
+.txn-amt .in{color:var(--g)}
+
+/* ── QUICK ACTION ── */
+.qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.qa-item{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;padding:4px}
+.qa-icon{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.qa-label{font-size:11px;font-weight:500;color:var(--t2);text-align:center;line-height:1.3}
+
+/* ── SERVICE GRID ── */
+.svc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.svc-item{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer}
+.svc-icon{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.svc-label{font-size:11px;color:var(--t2);font-weight:500;text-align:center}
+
+/* ── HEADER WITH BACK ── */
+.page-header{display:flex;align-items:center;gap:12px;padding:20px 24px 16px;flex-shrink:0}
+.back-btn{width:38px;height:38px;border-radius:12px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s}
+.back-btn:hover{background:var(--pbg);border-color:var(--p)}
+.back-btn svg{width:18px;height:18px;stroke:var(--t1);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.page-title{font-size:18px;font-weight:700;color:var(--t1)}
+
+/* ── OTP ── */
+.otp-row{display:flex;gap:10px;justify-content:center}
+.otp-box{width:46px;height:56px;border-radius:12px;border:1.5px solid var(--border);font-size:22px;font-weight:700;text-align:center;color:var(--t1);background:var(--bg);transition:.15s}
+.otp-box:focus{border-color:var(--p);background:#fff;box-shadow:0 0 0 3px rgba(108,60,225,.1)}
+.otp-box.filled{border-color:var(--p);background:var(--pbg)}
+
+/* ── BALANCE CARD ── */
+.balance-card{background:rgba(255,255,255,.15);border-radius:20px;padding:20px;margin:0 0 16px}
+.bal-label{font-size:12px;color:rgba(255,255,255,.7);font-weight:500;margin-bottom:4px}
+.bal-amount{font-size:32px;font-weight:700;color:#fff;display:flex;align-items:center;gap:10px}
+.bal-toggle{background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:4px 8px;cursor:pointer;color:rgba(255,255,255,.8);font-size:12px}
+.upi-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+.upi-id{font-size:13px;color:rgba(255,255,255,.85);font-weight:500}
+.copy-btn{background:rgba(255,255,255,.15);border:none;border-radius:6px;padding:3px 8px;font-size:11px;color:#fff;cursor:pointer;font-weight:600}
+
+/* ── ANALYTICS BAR ── */
+.cat-bar{height:8px;border-radius:4px;background:var(--border);overflow:hidden;margin-top:6px}
+.cat-fill{height:100%;border-radius:4px;transition:.5s}
+
+/* ── OFFER CARD ── */
+.offer-card{background:var(--pbg);border:1px dashed var(--pl);border-radius:var(--rad);padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:.15s}
+.offer-card:hover{background:var(--plg)}
+
+/* ── QR FRAME ── */
+.qr-frame{position:relative;width:220px;height:220px;margin:0 auto}
+.qr-corner{position:absolute;width:32px;height:32px}
+.qr-corner svg{stroke:var(--p);fill:none;stroke-width:4;stroke-linecap:round}
+.qr-tl{top:0;left:0}
+.qr-tr{top:0;right:0}
+.qr-bl{bottom:0;left:0}
+.qr-br{bottom:0;right:0}
+.qr-mock{width:180px;height:180px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#f0e8ff 25%,#e8d8ff 50%,#f0e8ff 75%);border-radius:8px;display:flex;align-items:center;justify-content:center}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--border);margin:16px 0}
+.section-title{font-size:13px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px}
+
+/* ── SUCCESS SCREEN ── */
+.success-icon{width:88px;height:88px;border-radius:50%;background:var(--gbg);display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
+.success-icon svg{width:48px;height:48px;stroke:var(--g);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── TOAST ── */
+.toast{position:absolute;bottom:90px;left:16px;right:16px;background:#1A1033;color:#fff;border-radius:14px;padding:14px 18px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;z-index:999;transform:translateY(20px);opacity:0;transition:.3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* ── VOICE WAVE ── */
+.voice-wave{display:flex;gap:5px;align-items:center;justify-content:center;height:48px}
+.wave-bar{width:4px;background:var(--p);border-radius:2px;animation:wave 1s ease-in-out infinite}
+.wave-bar:nth-child(1){animation-delay:0s;height:16px}
+.wave-bar:nth-child(2){animation-delay:.1s;height:28px}
+.wave-bar:nth-child(3){animation-delay:.2s;height:40px}
+.wave-bar:nth-child(4){animation-delay:.3s;height:28px}
+.wave-bar:nth-child(5){animation-delay:.4s;height:16px}
+@keyframes wave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.6)}}
+.voice-wave.paused .wave-bar{animation-play-state:paused}
+
+/* ── CHAT ── */
+.chat-bubble{max-width:75%;padding:10px 14px;border-radius:18px;font-size:13.5px;line-height:1.5;margin-bottom:8px}
+.chat-bubble.user{background:var(--p);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.chat-bubble.bot{background:var(--bg);color:var(--t1);border:1px solid var(--border);border-bottom-left-radius:4px;align-self:flex-start}
+.chat-messages{display:flex;flex-direction:column;padding:0 16px;gap:2px}
+.typing-dots{display:flex;gap:4px;align-items:center;padding:6px 2px}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--t3);animation:tdot 1.2s infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+/* ── PROFILE ROWS ── */
+.prow{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s}
+.prow:last-child{border-bottom:none}
+.prow:hover{padding-left:4px}
+.prow-icon{width:40px;height:40px;border-radius:12px;background:var(--pbg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.prow-icon svg{width:18px;height:18px;stroke:var(--p);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.prow-label{flex:1;font-size:14px;font-weight:500;color:var(--t1)}
+.prow-arrow svg{width:16px;height:16px;stroke:var(--t3);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── BILL / PLAN CARDS ── */
+.plan-card{border:1.5px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:12px}
+.plan-card:hover{border-color:var(--pl);background:var(--pbg)}
+.plan-card.selected{border-color:var(--p);background:var(--pbg)}
+.plan-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.plan-card.selected .plan-check{background:var(--p);border-color:var(--p)}
+.plan-card.selected .plan-check::after{content:'';width:8px;height:8px;border-radius:50%;background:#fff}
+
+/* ── ANIMATIONS ── */
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.slide-up{animation:slideUp .3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.fade-in{animation:fadeIn .25s ease}
+
+/* ── SCROLLBAR HIDE ── */
+*::-webkit-scrollbar{display:none}
+*{-ms-overflow-style:none;scrollbar-width:none}
+</style>
+</head>
+<body>
+<div class="shell">
+<div class="phone" id="phone">
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ════════════════════════════════════════
+     SCREEN: LOGIN
+════════════════════════════════════════ -->
+<div class="screen active" id="s-login" style="background:linear-gradient(160deg,#4C1D95,#6C3CE1)">
+  <div style="padding:60px 32px 40px;display:flex;flex-direction:column;align-items:center;gap:4px">
+    <div style="width:72px;height:72px;background:rgba(255,255,255,.15);border-radius:22px;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+      <svg style="width:38px;height:38px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    </div>
+    <h1 style="font-size:34px;font-weight:700;color:#fff;letter-spacing:-1px">PayZap</h1>
+    <p style="color:rgba(255,255,255,.7);font-size:14px">India ka sabse fast UPI</p>
+  </div>
+  <div style="flex:1;background:#fff;border-radius:32px 32px 0 0;padding:32px 24px 32px;display:flex;flex-direction:column;gap:20px">
+    <div>
+      <h2 style="font-size:22px;font-weight:700;color:var(--t1)">Enter mobile number</h2>
+      <p style="font-size:13px;color:var(--t2);margin-top:4px">We'll send an OTP to verify</p>
+    </div>
+    <div class="inp-wrap">
+      <span style="font-size:15px;font-weight:600;color:var(--t2);white-space:nowrap">🇮🇳 +91</span>
+      <input type="tel" id="phone-input" placeholder="10-digit mobile number" maxlength="10"/>
+    </div>
+    <button class="btn btn-primary" onclick="goOTP()">Send OTP</button>
+    <p style="font-size:12px;color:var(--t3);text-align:center">By continuing, you agree to our <span style="color:var(--p);cursor:pointer">Terms</span> & <span style="color:var(--p);cursor:pointer">Privacy Policy</span></p>
+    <div style="border-top:1px solid var(--border);padding-top:16px;text-align:center">
+      <p style="font-size:13px;color:var(--t3)">Demo mode — tap Send OTP to continue</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: OTP ── -->
+<div class="screen" id="s-otp">
+  <div class="grad-header" style="padding:60px 24px 32px">
+    <div style="width:52px;height:52px;background:rgba(255,255,255,.15);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+      <svg style="width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+    </div>
+    <h2>OTP Verification</h2>
+    <p>Sent to +91 <span id="otp-phone">XXXXXXXXXX</span></p>
+  </div>
+  <div style="flex:1;padding:32px 24px;display:flex;flex-direction:column;gap:20px">
+    <div>
+      <p style="font-size:15px;font-weight:600;color:var(--t1);margin-bottom:20px">Enter 6-digit OTP</p>
+      <div class="otp-row" id="otp-row">
+        <input class="otp-box" maxlength="1" data-idx="0" oninput="otpInput(this)" onkeydown="otpKey(event,this)"/>
+        <input class="otp-box" maxlength="1" data-idx="1" oninput="otpInput(this)" onkeydown="otpKey(event,this)"/>
+        <input class="otp-box" maxlength="1" data-idx="2" oninput="otpInput(this)" onkeydown="otpKey(event,this)"/>
+        <input class="otp-box" maxlength="1" data-idx="3" oninput="otpInput(this)" onkeydown="otpKey(event,this)"/>
+        <input class="otp-box" maxlength="1" data-idx="4" oninput="otpInput(this)" onkeydown="otpKey(event,this)"/>
+        <input class="otp-box" maxlength="1" data-idx="5" oninput="otpInput(this)" onkeydown="otpKey(event,this)"/>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="verifyOTP()">Verify OTP</button>
+    <p style="text-align:center;font-size:13px;color:var(--t3)">Resend OTP in <span style="color:var(--p);font-weight:600" id="resend-timer">30s</span></p>
+    <div style="background:var(--pbg);border-radius:12px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start">
+      <svg style="width:16px;height:16px;stroke:var(--p);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+      <p style="font-size:12px;color:var(--p);line-height:1.5">Demo: Enter any 6 digits to continue. OTP is <b>123456</b></p>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: PIN SETUP ── -->
+<div class="screen" id="s-pin-setup">
+  <div style="flex:1;padding:60px 24px 32px;display:flex;flex-direction:column;align-items:center">
+    <div style="width:72px;height:72px;background:var(--pbg);border-radius:22px;display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+      <svg style="width:36px;height:36px;stroke:var(--p);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h2 style="font-size:22px;font-weight:700;color:var(--t1);text-align:center" id="pin-setup-title">Create UPI PIN</h2>
+    <p style="font-size:13px;color:var(--t2);text-align:center;margin-top:6px" id="pin-setup-sub">Set a 6-digit PIN to authorise payments</p>
+    <div class="pin-dots" id="pin-setup-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div class="keypad" style="width:100%">
+      <div class="kkey" onclick="pinKey('1')">1</div><div class="kkey" onclick="pinKey('2')">2</div><div class="kkey" onclick="pinKey('3')">3</div>
+      <div class="kkey" onclick="pinKey('4')">4</div><div class="kkey" onclick="pinKey('5')">5</div><div class="kkey" onclick="pinKey('6')">6</div>
+      <div class="kkey" onclick="pinKey('7')">7</div><div class="kkey" onclick="pinKey('8')">8</div><div class="kkey" onclick="pinKey('9')">9</div>
+      <div class="kkey empty"></div><div class="kkey" onclick="pinKey('0')">0</div>
+      <div class="kkey" onclick="pinKey('⌫')">
+        <svg style="width:24px;height:24px;stroke:var(--t1);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--t3);text-align:center;padding:0 32px;margin-top:16px">
+      <svg style="width:13px;height:13px;stroke:var(--t3);fill:none;stroke-width:2;display:inline;vertical-align:middle;margin-right:4px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+      Never share your UPI PIN with anyone
+    </p>
+  </div>
+</div>
+
+<!-- ── SCREEN: HOME ── -->
+<div class="screen" id="s-home">
+  <div class="statusbar light" style="background:linear-gradient(145deg,#4C1D95,#6C3CE1)">
+    <span>9:41</span>
+    <div class="sb-right">
+      <svg style="width:15px;height:15px;fill:#fff" viewBox="0 0 24 24"><path d="M1 6l5 5L12 4l6 7 5-5" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <svg style="width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="2"/><path d="M22 11h2v4h-2"/></svg>
+    </div>
+  </div>
+  <div style="background:linear-gradient(145deg,#4C1D95 0%,#6C3CE1 50%,#8B5CF6 100%);padding:0 24px 32px">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0 20px">
+      <div>
+        <p style="color:rgba(255,255,255,.75);font-size:13px">Good morning,</p>
+        <h2 style="color:#fff;font-size:22px;font-weight:700">Priya Sharma 👋</h2>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="showToast('🔔 No new notifications')">
+          <svg style="width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <div class="av av-44" style="background:rgba(255,255,255,.2);color:#fff;font-size:14px;cursor:pointer" onclick="nav('profile')">PS</div>
+      </div>
+    </div>
+    <div class="balance-card">
+      <p class="bal-label">Bank Balance</p>
+      <div class="bal-amount">
+        <span id="bal-display">₹24,850.00</span>
+        <button class="bal-toggle" onclick="toggleBal()" id="bal-toggle-btn">Hide</button>
+      </div>
+      <div class="upi-row">
+        <span class="upi-id">priya.sharma@payzap</span>
+        <button class="copy-btn" onclick="showToast('✅ UPI ID copied!')">Copy</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <div style="background:rgba(255,255,255,.15);border-radius:12px;padding:8px 14px;display:flex;align-items:center;gap:6px;cursor:pointer" onclick="nav('rewards')">
+        <svg style="width:14px;height:14px;stroke:#FFD700;fill:#FFD700" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span style="font-size:12px;color:#fff;font-weight:600">1,250 points</span>
+      </div>
+      <div style="background:rgba(255,255,255,.15);border-radius:12px;padding:8px 14px;display:flex;align-items:center;gap:6px;cursor:pointer" onclick="showToast('⚡ UPI Lite: ₹500 available')">
+        <svg style="width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <span style="font-size:12px;color:#fff;font-weight:600">UPI Lite ₹500</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1;padding:0 16px 16px;overflow-y:auto;margin-top:-16px">
+    <!-- Quick Actions -->
+    <div class="card slide-up" style="margin-bottom:12px">
+      <div class="qa-grid">
+        <div class="qa-item" onclick="nav('send')">
+          <div class="qa-icon" style="background:#EDE9FE"><svg style="width:26px;height:26px;stroke:var(--p);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
+          <span class="qa-label">Send Money</span>
+        </div>
+        <div class="qa-item" onclick="nav('request')">
+          <div class="qa-icon" style="background:#ECFDF5"><svg style="width:26px;height:26px;stroke:var(--g);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="23 7 23 1 17 1"/><line x1="23" y1="1" x2="14" y2="10"/><path d="M1 23l8-8M16 23H1V8"/></svg></div>
+          <span class="qa-label">Request</span>
+        </div>
+        <div class="qa-item" onclick="nav('scan')">
+          <div class="qa-icon" style="background:#FFF7ED"><svg style="width:26px;height:26px;stroke:#D97706;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><path d="M21 16h-3v-3m0 6h3M21 21h.01M13 3v2m0 4v2m4-6h2M11 11h2v2M3 13h2m0 4h2m4 0v2M11 21h2"/></svg></div>
+          <span class="qa-label">Scan QR</span>
+        </div>
+        <div class="qa-item" onclick="nav('bills')">
+          <div class="qa-icon" style="background:#EFF6FF"><svg style="width:26px;height:26px;stroke:var(--b);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+          <span class="qa-label">Pay Bills</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Services -->
+    <div class="card slide-up" style="margin-bottom:12px">
+      <p class="section-title">Pay & Recharge</p>
+      <div class="svc-grid">
+        <div class="svc-item" onclick="nav('recharge')"><div class="svc-icon" style="background:#FFF7ED"><svg style="width:24px;height:24px;stroke:#D97706;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></div><span class="svc-label">Recharge</span></div>
+        <div class="svc-item" onclick="showBill('electricity')"><div class="svc-icon" style="background:#FFFBEB"><svg style="width:24px;height:24px;stroke:#D97706;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><span class="svc-label">Electricity</span></div>
+        <div class="svc-item" onclick="showBill('water')"><div class="svc-icon" style="background:#EFF6FF"><svg style="width:24px;height:24px;stroke:var(--b);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div><span class="svc-label">Water</span></div>
+        <div class="svc-item" onclick="showBill('gas')"><div class="svc-icon" style="background:#FEF2F2"><svg style="width:24px;height:24px;stroke:var(--r);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M8.56 2.9A7 7 0 0 1 19 9v4a7 7 0 0 1-7 7 7 7 0 0 1-7-7v-4a7 7 0 0 1 3.56-6.1"/><circle cx="12" cy="12" r="2"/></svg></div><span class="svc-label">Gas</span></div>
+        <div class="svc-item" onclick="showBill('broadband')"><div class="svc-icon" style="background:var(--pbg)"><svg style="width:24px;height:24px;stroke:var(--p);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="var(--p)"/></svg></div><span class="svc-label">Broadband</span></div>
+        <div class="svc-item" onclick="showToast('🚗 FASTag coming soon!')"><div class="svc-icon" style="background:var(--gbg)"><svg style="width:24px;height:24px;stroke:var(--g);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><span class="svc-label">FASTag</span></div>
+        <div class="svc-item" onclick="showToast('📺 DTH coming soon!')"><div class="svc-icon" style="background:#F5F3FF"><svg style="width:24px;height:24px;stroke:#7C3AED;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg></div><span class="svc-label">DTH</span></div>
+        <div class="svc-item" onclick="showToast('🌐 More services loading...')"><div class="svc-icon" style="background:var(--bg)"><svg style="width:24px;height:24px;stroke:var(--t2);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div><span class="svc-label">More</span></div>
+      </div>
+    </div>
+
+    <!-- Offers -->
+    <div class="card slide-up" style="margin-bottom:12px">
+      <p class="section-title">Active Offers</p>
+      <div class="offer-card" onclick="showToast('🎁 10% cashback applied!')">
+        <div style="width:44px;height:44px;background:var(--plg);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg style="width:22px;height:22px;stroke:var(--p);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+        </div>
+        <div style="flex:1">
+          <p style="font-size:13px;font-weight:600;color:var(--t1)">10% cashback on bills</p>
+          <p style="font-size:11px;color:var(--t2);margin-top:2px">Max ₹50 · Min ₹200 · Use BILL10</p>
+        </div>
+        <span class="badge badge-purple">Active</span>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="card slide-up">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <p class="section-title" style="margin:0">Recent</p>
+        <span style="font-size:13px;color:var(--p);font-weight:600;cursor:pointer" onclick="nav('history')">See all →</span>
+      </div>
+      <div id="home-txns"></div>
+    </div>
+  </div>
+  <div class="nav" id="home-nav">
+    <div class="nav-item active" onclick="navTab('home')">
+      <svg class="nav-icon" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="nav-label">Home</span>
+    </div>
+    <div class="nav-item" onclick="navTab('history')">
+      <svg class="nav-icon" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span class="nav-label">History</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer" onclick="nav('scan')">
+      <div class="nav-scan">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><path d="M21 16h-3v-3m0 6h3M21 21h.01M13 3v2m0 4h2M15 3h2m-4 8v4M11 19h2m2 0v2"/></svg>
+      </div>
+      <span class="nav-label">Scan</span>
+    </div>
+    <div class="nav-item" onclick="navTab('chat')">
+      <svg class="nav-icon" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="nav-label">Assistant</span>
+    </div>
+    <div class="nav-item" onclick="navTab('profile')">
+      <svg class="nav-icon" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="nav-label">Profile</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: SEND ── -->
+<div class="screen" id="s-send">
+  <div class="page-header">
+    <div class="back-btn" onclick="nav('home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <span class="page-title">Send Money</span>
+  </div>
+  <div style="flex:1;padding:0 24px 32px;overflow-y:auto" id="send-step-receiver">
+    <p style="font-size:15px;font-weight:600;color:var(--t1);margin-bottom:20px">Who do you want to pay?</p>
+    <div class="field-label">UPI ID</div>
+    <div class="inp-wrap" style="margin-bottom:12px">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+      <input type="text" id="recv-upi" placeholder="name@bank" value=""/>
+    </div>
+    <button class="btn btn-ghost" style="margin-bottom:20px" onclick="nav('scan')">
+      📷 &nbsp;Scan QR Code instead
+    </button>
+    <div class="divider"></div>
+    <p class="section-title">Recent Contacts</p>
+    <div id="contact-list"></div>
+    <div style="margin-top:20px">
+      <button class="btn btn-primary" onclick="goSendAmount()">Continue</button>
+    </div>
+  </div>
+  <div style="flex:1;padding:0 24px 32px;overflow-y:auto;display:none" id="send-step-amount">
+    <div style="display:flex;align-items:center;gap:12px;background:var(--pbg);border-radius:14px;padding:14px;margin-bottom:24px">
+      <div class="av av-44" id="send-recv-av" style="background:var(--p);color:#fff"></div>
+      <div><p style="font-size:15px;font-weight:600;color:var(--t1)" id="send-recv-name"></p><p style="font-size:12px;color:var(--t2)" id="send-recv-upi"></p></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:8px">
+      <span style="font-size:32px;font-weight:700;color:var(--t2)">₹</span>
+      <input type="number" id="send-amount" placeholder="0" style="font-size:48px;font-weight:700;color:var(--t1);border:none;background:none;width:100%;outline:none"/>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">
+      <span onclick="document.getElementById('send-amount').value=100" style="padding:6px 14px;background:var(--pbg);border-radius:20px;font-size:13px;font-weight:600;color:var(--p);cursor:pointer">₹100</span>
+      <span onclick="document.getElementById('send-amount').value=200" style="padding:6px 14px;background:var(--pbg);border-radius:20px;font-size:13px;font-weight:600;color:var(--p);cursor:pointer">₹200</span>
+      <span onclick="document.getElementById('send-amount').value=500" style="padding:6px 14px;background:var(--pbg);border-radius:20px;font-size:13px;font-weight:600;color:var(--p);cursor:pointer">₹500</span>
+      <span onclick="document.getElementById('send-amount').value=1000" style="padding:6px 14px;background:var(--pbg);border-radius:20px;font-size:13px;font-weight:600;color:var(--p);cursor:pointer">₹1,000</span>
+      <span onclick="document.getElementById('send-amount').value=2000" style="padding:6px 14px;background:var(--pbg);border-radius:20px;font-size:13px;font-weight:600;color:var(--p);cursor:pointer">₹2,000</span>
+    </div>
+    <div class="inp-wrap" style="margin-bottom:24px">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <input type="text" id="send-note" placeholder="Add a note (optional)"/>
+    </div>
+    <button class="btn btn-primary" onclick="goSendConfirm()">Proceed to Pay</button>
+    <button class="btn btn-outline" style="margin-top:10px" onclick="showSendStep('receiver')">Back</button>
+  </div>
+  <div style="flex:1;padding:0 24px 32px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px" id="send-step-confirm">
+    <div class="av av-64" id="confirm-av" style="color:#fff"></div>
+    <p style="font-size:20px;font-weight:700;color:var(--t1)" id="confirm-name2"></p>
+    <p style="font-size:13px;color:var(--t2)" id="confirm-upi2"></p>
+    <p style="font-size:44px;font-weight:700;color:var(--p);margin:8px 0" id="confirm-amt"></p>
+    <p style="font-size:13px;color:var(--t3)" id="confirm-note2"></p>
+    <div id="fraud-warn" style="display:none;background:#FFF7ED;border:1px solid #FDE68A;border-radius:12px;padding:12px 16px;width:100%;margin:8px 0">
+      <p style="font-size:12px;color:#92400E">⚠️ New recipient — please verify UPI ID before proceeding</p>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="nav('pin-pay')">Confirm & Pay</button>
+    <button class="btn btn-outline" style="width:100%" onclick="showSendStep('amount')">Go Back</button>
+  </div>
+</div>
+
+<!-- ── SCREEN: PIN PAY ── -->
+<div class="screen" id="s-pin-pay">
+  <div class="page-header">
+    <div class="back-btn" onclick="nav('send')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <span class="page-title">Enter UPI PIN</span>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:20px 24px">
+    <div style="width:64px;height:64px;background:var(--pbg);border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+      <svg style="width:32px;height:32px;stroke:var(--p);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <p style="font-size:18px;font-weight:700;color:var(--t1)">Enter UPI PIN</p>
+    <p style="font-size:13px;color:var(--t2);margin-top:4px;text-align:center" id="pay-pin-sub">Paying ₹0 to User</p>
+    <div class="pin-dots" id="pay-pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div class="keypad" style="width:100%">
+      <div class="kkey" onclick="payPinKey('1')">1</div><div class="kkey" onclick="payPinKey('2')">2</div><div class="kkey" onclick="payPinKey('3')">3</div>
+      <div class="kkey" onclick="payPinKey('4')">4</div><div class="kkey" onclick="payPinKey('5')">5</div><div class="kkey" onclick="payPinKey('6')">6</div>
+      <div class="kkey" onclick="payPinKey('7')">7</div><div class="kkey" onclick="payPinKey('8')">8</div><div class="kkey" onclick="payPinKey('9')">9</div>
+      <div class="kkey empty"></div><div class="kkey" onclick="payPinKey('0')">0</div>
+      <div class="kkey" onclick="payPinKey('⌫')"><svg style="width:22px;height:22px;stroke:var(--t1);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg></div>
+    </div>
+    <p style="font-size:11px;color:var(--t3);margin-top:16px;text-align:center">💡 Demo PIN: <b>123456</b></p>
+  </div>
+</div>
+
+<!-- ── SCREEN: SUCCESS ── -->
+<div class="screen" id="s-success">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:8px">
+    <div class="success-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <h2 style="font-size:26px;font-weight:700;color:var(--t1)">Payment Successful!</h2>
+    <p style="font-size:42px;font-weight:700;color:var(--g)" id="success-amt"></p>
+    <p style="font-size:15px;color:var(--t2)" id="success-to"></p>
+    <p style="font-size:12px;color:var(--t3);font-family:var(--mono)" id="success-ref"></p>
+    <div id="success-cashback" style="display:none;background:var(--obg);border-radius:12px;padding:12px 20px;margin-top:8px;text-align:center">
+      <p style="font-size:14px;font-weight:600;color:#92400E">🎁 ₹<span id="cashback-amt">0</span> cashback earned!</p>
+    </div>
+    <div style="width:100%;margin-top:24px;display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-primary" onclick="nav('home')">Back to Home</button>
+      <button class="btn btn-outline" onclick="showToast('📄 Receipt downloaded!')">Download Receipt</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: REQUEST ── -->
+<div class="screen" id="s-request">
+  <div class="page-header">
+    <div class="back-btn" onclick="nav('home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <span class="page-title">Request Money</span>
+  </div>
+  <div style="flex:1;padding:0 24px 32px;overflow-y:auto;display:flex;flex-direction:column;gap:16px">
+    <div>
+      <div class="field-label">Request from (UPI ID)</div>
+      <div class="inp-wrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg><input type="text" id="req-upi" placeholder="name@bank"/></div>
+    </div>
+    <div>
+      <div class="field-label">Amount (₹)</div>
+      <div class="inp-wrap"><span style="font-size:18px;font-weight:700;color:var(--t2)">₹</span><input type="number" id="req-amount" placeholder="0"/></div>
+    </div>
+    <div>
+      <div class="field-label">Note (optional)</div>
+      <div class="inp-wrap"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><input type="text" id="req-note" placeholder="What's it for?"/></div>
+    </div>
+    <button class="btn btn-primary" onclick="sendRequest()">Send Request</button>
+    <div style="background:var(--gbg);border-radius:12px;padding:14px 16px">
+      <p style="font-size:13px;font-weight:600;color:#065F46;margin-bottom:4px">✅ How it works</p>
+      <p style="font-size:12px;color:#047857;line-height:1.5">The person receives a payment request notification. Once they approve and enter their PIN, the money is credited to your account instantly.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: SCAN ── -->
+<div class="screen" id="s-scan" style="background:#000">
+  <div style="position:relative;flex:1;display:flex;flex-direction:column">
+    <div style="padding:50px 24px 16px;display:flex;align-items:center;justify-content:space-between">
+      <div class="back-btn" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2)" onclick="nav('home')"><svg viewBox="0 0 24 24" style="stroke:#fff"><polyline points="15 18 9 12 15 6"/></svg></div>
+      <span style="color:#fff;font-size:16px;font-weight:600">Scan QR Code</span>
+      <div style="width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="showToast('🔦 Torch toggled')">
+        <svg style="width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center">
+      <div class="qr-frame">
+        <div class="qr-corner qr-tl"><svg viewBox="0 0 32 32"><path d="M2 16V2h14"/></svg></div>
+        <div class="qr-corner qr-tr"><svg viewBox="0 0 32 32"><path d="M30 16V2H16"/></svg></div>
+        <div class="qr-corner qr-bl"><svg viewBox="0 0 32 32"><path d="M2 16v14h14"/></svg></div>
+        <div class="qr-corner qr-br"><svg viewBox="0 0 32 32"><path d="M30 16v14H16"/></svg></div>
+        <div class="qr-mock">
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:16px">
+            <script>
+              const qrPattern=[1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,0,1,1,1,0,1,1,0,1,0,1,0,1,1,0,1,1,1,0,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,0,0,1,0,0,1,0,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,0,1,1,1,0,1,1,0,1,0,1,0,1,1,0,1,1,1,0,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,1,0,0];
+              document.write(qrPattern.map(b=>`<div style="width:8px;height:8px;background:${b?'#4C1D95':'#F3EEFF'};border-radius:1px"></div>`).join(''));
+            </script>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="background:rgba(0,0,0,.6);padding:24px;display:flex;flex-direction:column;align-items:center;gap:16px;border-radius:24px 24px 0 0">
+      <p style="color:rgba(255,255,255,.8);font-size:14px">Point camera at any UPI QR code</p>
+      <div style="display:flex;gap:20px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer" onclick="showToast('👥 Contacts page loading...')">
+          <div style="width:50px;height:50px;background:rgba(255,255,255,.15);border-radius:14px;display:flex;align-items:center;justify-content:center">
+            <svg style="width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <span style="font-size:12px;color:rgba(255,255,255,.7)">Pay Contact</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer" onclick="demoScan()">
+          <div style="width:50px;height:50px;background:var(--p);border-radius:14px;display:flex;align-items:center;justify-content:center">
+            <svg style="width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/></svg>
+          </div>
+          <span style="font-size:12px;color:rgba(255,255,255,.7)">Demo Scan</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer" onclick="showToast('🖼️ Gallery QR scan coming soon')">
+          <div style="width:50px;height:50px;background:rgba(255,255,255,.15);border-radius:14px;display:flex;align-items:center;justify-content:center">
+            <svg style="width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <span style="font-size:12px;color:rgba(255,255,255,.7)">Gallery</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: BILLS ── -->
+<div class="screen" id="s-bills">
+  <div class="page-header">
+    <div class="back-btn" onclick="nav('home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <span class="page-title" id="bills-title">Pay Bills</span>
+  </div>
+  <div style="flex:1;padding:0 24px 32px;overflow-y:auto">
+    <div id="bills-type-select">
+      <p class="section-title">Select category</p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+        <div class="card card-sm" style="cursor:pointer;display:flex;align-items:center;gap:12px" onclick="showBill('electricity')"><div style="width:40px;height:40px;background:#FFFBEB;border-radius:12px;display:flex;align-items:center;justify-content:center">⚡</div><span style="font-size:14px;font-weight:500">Electricity</span></div>
+        <div class="card card-sm" style="cursor:pointer;display:flex;align-items:center;gap:12px" onclick="showBill('water')"><div style="width:40px;height:40px;background:#EFF6FF;border-radius:12px;display:flex;align-items:center;justify-content:center">💧</div><span style="font-size:14px;font-weight:500">Water</span></div>
+        <div class="card card-sm" style="cursor:pointer;display:flex;align-items:center;gap:12px" onclick="showBill('gas')"><div style="width:40px;height:40px;background:#FEF2F2;border-radius:12px;display:flex;align-items:center;justify-content:center">🔥</div><span style="font-size:14px;font-weight:500">Gas / PNG</span></div>
+        <div class="card card-sm" style="cursor:pointer;display:flex;align-items:center;gap:12px" onclick="showBill('broadband')"><div style="width:40px;height:40px;background:var(--pbg);border-radius:12px;display:flex;align-items:center;justify-content:center">📡</div><span style="font-size:14px;font-weight:500">Broadband</span></div>
+        <div class="card card-sm" style="cursor:pointer;display:flex;align-items:center;gap:12px" onclick="showBill('dth')"><div style="width:40px;height:40px;background:#F5F3FF;border-radius:12px;display:flex;align-items:center;justify-content:center">📺</div><span style="font-size:14px;font-weight:500">DTH</span></div>
+        <div class="card card-sm" style="cursor:pointer;display:flex;align-items:center;gap:12px" onclick="showBill('loan')"><div style="width:40px;height:40px;background:var(--gbg);border-radius:12px;display:flex;align-items:center;justify-content:center">🏦</div><span style="font-size:14px;font-weight:500">Loan EMI</span></div>
+      </div>
+    </div>
+    <div id="bills-detail" style="display:none;flex-direction:column;gap:16px">
+      <div>
+        <div class="field-label">Provider</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="bill-providers"></div>
+      </div>
+      <div>
+        <div class="field-label">Consumer Number</div>
+        <div class="inp-wrap"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><input type="text" id="bill-consnum" placeholder="Enter consumer/account number"/></div>
+      </div>
+      <button class="btn btn-ghost" onclick="fetchBill()">Fetch Bill Amount</button>
+      <div id="bill-summary" style="display:none;background:var(--bg);border-radius:14px;border:1px solid var(--border);padding:16px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-size:13px;color:var(--t3)">Amount Due</span><span style="font-size:20px;font-weight:700;color:var(--p)" id="bill-amount-display"></span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-size:13px;color:var(--t3)">Due Date</span><span style="font-size:13px;font-weight:600;color:var(--o)">15 Dec 2024</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--t3)">Provider</span><span style="font-size:13px;font-weight:600;color:var(--t1)" id="bill-prov-display"></span></div>
+        <div class="divider"></div>
+        <button class="btn btn-primary" onclick="payBillNow()">Pay Now</button>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('bills-detail').style.display='none';document.getElementById('bills-type-select').style.display='block'">← Change Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: RECHARGE ── -->
+<div class="screen" id="s-recharge">
+  <div class="page-header">
+    <div class="back-btn" onclick="nav('home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <span class="page-title">Mobile Recharge</span>
+  </div>
+  <div style="flex:1;padding:0 24px 32px;overflow-y:auto;display:flex;flex-direction:column;gap:16px">
+    <div>
+      <div class="field-label">Mobile Number</div>
+      <div class="inp-wrap"><span style="font-size:15px;font-weight:600;color:var(--t2)">🇮🇳 +91</span><input type="tel" id="rech-mobile" placeholder="10-digit number" maxlength="10"/></div>
+    </div>
+    <div>
+      <div class="field-label">Operator</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="operator-pills">
+        <span class="op-pill" onclick="selectOp(this,'Jio')" style="padding:8px 16px;border-radius:20px;border:1.5px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;color:var(--t2)">Jio</span>
+        <span class="op-pill" onclick="selectOp(this,'Airtel')" style="padding:8px 16px;border-radius:20px;border:1.5px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;color:var(--t2)">Airtel</span>
+        <span class="op-pill" onclick="selectOp(this,'Vi')" style="padding:8px 16px;border-radius:20px;border:1.5px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;color:var(--t2)">Vi</span>
+        <span class="op-pill" onclick="selectOp(this,'BSNL')" style="padding:8px 16px;border-radius:20px;border:1.5px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;color:var(--t2)">BSNL</span>
+      </div>
+    </div>
+    <p class="section-title">Popular Plans</p>
+    <div style="display:flex;flex-direction:column;gap:10px" id="plan-list">
+      <div class="plan-card" onclick="selectPlan(this,149,'28 days','1 GB/day')"><div class="plan-check"></div><div style="flex:1"><p style="font-size:18px;font-weight:700;color:var(--t1)">₹149</p><p style="font-size:11px;color:var(--t3)">28 days · 1 GB/day</p></div><span class="badge badge-green">Popular</span></div>
+      <div class="plan-card" onclick="selectPlan(this,199,'28 days','1.5 GB/day')"><div class="plan-check"></div><div style="flex:1"><p style="font-size:18px;font-weight:700;color:var(--t1)">₹199</p><p style="font-size:11px;color:var(--t3)">28 days · 1.5 GB/day</p></div></div>
+      <div class="plan-card" onclick="selectPlan(this,299,'28 days','2 GB/day')"><div class="plan-check"></div><div style="flex:1"><p style="font-size:18px;font-weight:700;color:var(--t1)">₹299</p><p style="font-size:11px;color:var(--t3)">28 days · 2 GB/day + Hotstar</p></div></div>
+      <div class="plan-card" onclick="selectPlan(this,599,'84 days','2 GB/day')"><div class="plan-check"></div><div style="flex:1"><p style="font-size:18px;font-weight:700;color:var(--t1)">₹599</p><p style="font-size:11px;color:var(--t3)">84 days · 2 GB/day · Unlimited calls</p></div></div>
+      <div class="plan-card" onclick="selectPlan(this,719,'84 days','3 GB/day')"><div class="plan-check"></div><div style="flex:1"><p style="font-size:18px;font-weight:700;color:var(--t1)">₹719</p><p style="font-size:11px;color:var(--t3)">84 days · 3 GB/day + Disney+</p></div></div>
+    </div>
+    <button class="btn btn-primary" id="rech-pay-btn" style="display:none" onclick="payRecharge()">Recharge Now</button>
+  </div>
+</div>
+
+<!-- ── SCREEN: HISTORY ── -->
+<div class="screen" id="s-history">
+  <div class="page-header">
+    <div class="back-btn" onclick="nav('home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <span class="page-title">Transactions</span>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <div style="width:38px;height:38px;background:var(--bg);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="toggleAnalytics()">
+        <svg style="width:18px;height:18px;stroke:var(--t2);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      </div>
+    </div>
+  </div>
+  <!-- Summary -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 24px 16px">
+    <div style="background:var(--rbg);border-radius:14px;padding:14px"><p style="font-size:11px;color:#991B1B;font-weight:600;margin-bottom:4px">SENT</p><p style="font-size:20px;font-weight:700;color:var(--r)">₹12,400</p></div>
+    <div style="background:var(--gbg);border-radius:14px;padding:14px"><p style="font-size:11px;color:#065F46;font-weight:600;margin-bottom:4px">RECEIVED</p><p style="font-size:20px;font-weight:700;color:var(--g)">₹8,200</p></div>
+  </div>
+  <!-- Analytics -->
+  <div id="analytics-panel" style="display:none;padding:0 24px 16px">
+    <div class="card">
+      <p class="section-title">Spending by category</p>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--t2)">🍕 Food & Dining</span><span style="font-size:13px;font-weight:600;color:var(--t1)">₹3,200</span></div><div class="cat-bar"><div class="cat-fill" style="width:65%;background:var(--o)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--t2)">🛒 Shopping</span><span style="font-size:13px;font-weight:600;color:var(--t1)">₹2,800</span></div><div class="cat-bar"><div class="cat-fill" style="width:55%;background:var(--p)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--t2)">🚗 Transport</span><span style="font-size:13px;font-weight:600;color:var(--t1)">₹1,800</span></div><div class="cat-bar"><div class="cat-fill" style="width:36%;background:var(--b)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--t2)">📱 Recharge</span><span style="font-size:13px;font-weight:600;color:var(--t1)">₹1,200</span></div><div class="cat-bar"><div class="cat-fill" style="width:24%;background:var(--g)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--t2)">📄 Bills</span><span style="font-size:13px;font-weight:600;color:var(--t1)">₹3,400</span></div><div class="cat-bar"><div class="cat-fill" style="width:68%;background:var(--r)"></div></div></div>
+      </div>
+    </div>
+  </div>
+  <!-- Tabs -->
+  <div style="display:flex;gap:8px;padding:0 24px 12px">
+    <span class="htab active" onclick="filterTxn(this,'all')" style="padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;background:var(--p);color:#fff">All</span>
+    <span class="htab" onclick="filterTxn(this,'sent')" style="padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;background:var(--bg);color:var(--t2);border:1px solid var(--border)">Sent</span>
+    <span class="htab" onclick="filterTxn(this,'received')" style="padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;background:var(--bg);color:var(--t2);border:1px solid var(--border)">Received</span>
+    <span class="htab" onclick="filterTxn(this,'bills')" style="padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;background:var(--bg);color:var(--t2);border:1px solid var(--border)">Bills</span>
+  </div>
+  <div style="flex:1;padding:0 24px;overflow-y:auto">
+    <div class="card" id="hist-list"></div>
+  </div>
+</div>
+
+<!-- ── SCREEN: REWARDS ── -->
+<div class="screen" id="s-rewards">
+  <div style="background:linear-gradient(145deg,#B45309,#D97706);padding:60px 24px 32px">
+    <div class="back-btn" style="background:rgba(255,255,255,.2);border-color:transparent;margin-bottom:20px" onclick="nav('home')"><svg viewBox="0 0 24 24" style="stroke:#fff"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <div style="text-align:center">
+      <p style="color:rgba(255,255,255,.8);font-size:14px;margin-bottom:8px">Your Reward Points</p>
+      <p style="color:#fff;font-size:56px;font-weight:800">1,250</p>
+      <p style="color:rgba(255,255,255,.7);font-size:14px;margin-top:4px">≈ ₹12.50 value</p>
+      <button class="btn" style="background:rgba(255,255,255,.2);color:#fff;width:auto;padding:10px 24px;margin-top:16px;font-weight:600">Redeem Points</button>
+    </div>
+  </div>
+  <div style="flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px">
+    <div class="card">
+      <p class="section-title">How to earn</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--t1)">💸 Send money</span><span class="badge badge-purple">10 pts/txn</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--t1)">📄 Pay bills</span><span class="badge badge-purple">20 pts/txn</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--t1)">📱 Recharge</span><span class="badge badge-purple">15 pts/txn</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--t1)">👥 Refer a friend</span><span class="badge badge-orange">500 pts</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <p class="section-title">Active Offers</p>
+      <div class="offer-card" style="margin-bottom:10px" onclick="showToast('🎁 BILL10 copied!')"><div style="width:40px;height:40px;background:var(--plg);border-radius:12px;display:flex;align-items:center;justify-content:center">📄</div><div style="flex:1;margin:0 10px"><p style="font-size:13px;font-weight:600">10% cashback on bills</p><p style="font-size:11px;color:var(--t2);margin-top:2px">Max ₹50 · Code: BILL10</p></div><span class="badge badge-purple">Copy</span></div>
+      <div class="offer-card" onclick="showToast('🎁 RECHARGE20 copied!')"><div style="width:40px;height:40px;background:#FFF7ED;border-radius:12px;display:flex;align-items:center;justify-content:center">📱</div><div style="flex:1;margin:0 10px"><p style="font-size:13px;font-weight:600">₹20 back on recharge</p><p style="font-size:11px;color:var(--t2);margin-top:2px">Min ₹199 · Code: RECHARGE20</p></div><span class="badge badge-orange">Copy</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: CHAT ── -->
+<div class="screen" id="s-chat" style="background:var(--bg)">
+  <div style="background:#fff;border-bottom:1px solid var(--border);padding:50px 20px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0">
+    <div class="back-btn" onclick="nav('home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <div style="width:40px;height:40px;background:linear-gradient(135deg,var(--p),var(--pl));border-radius:13px;display:flex;align-items:center;justify-content:center"><svg style="width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+    <div><p style="font-size:15px;font-weight:700;color:var(--t1)">PayZap Assistant</p><p style="font-size:11px;color:var(--g)">● Online · AI-powered</p></div>
+    <div style="margin-left:auto;width:34px;height:34px;background:var(--bg);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="startVoice()">🎙️</div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:16px 0" id="chat-area">
+    <div class="chat-messages">
+      <div class="chat-bubble bot">Namaste! 🙏 I'm your PayZap Assistant.<br><br>I can help with payments, transaction queries, UPI tips, and more. What would you like to know?</div>
+    </div>
+    <div style="padding:0 16px;display:flex;flex-wrap:wrap;gap:8px;margin-top:8px" id="chat-suggestions">
+      <span onclick="chatSuggest(this)" style="padding:7px 14px;background:#fff;border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--p);cursor:pointer;font-weight:500">Check my balance</span>
+      <span onclick="chatSuggest(this)" style="padding:7px 14px;background:#fff;border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--p);cursor:pointer;font-weight:500">Why did my payment fail?</span>
+      <span onclick="chatSuggest(this)" style="padding:7px 14px;background:#fff;border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--p);cursor:pointer;font-weight:500">How to get cashback?</span>
+      <span onclick="chatSuggest(this)" style="padding:7px 14px;background:#fff;border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--p);cursor:pointer;font-weight:500">What is UPI Lite?</span>
+    </div>
+  </div>
+  <div style="background:#fff;border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:10px;align-items:flex-end;flex-shrink:0">
+    <div class="inp-wrap" style="flex:1"><input type="text" id="chat-input" placeholder="Ask me anything…" onkeydown="if(event.key==='Enter')sendChat()"/></div>
+    <button style="width:42px;height:42px;background:var(--p);border-radius:13px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" onclick="sendChat()"><svg style="width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+  </div>
+</div>
+
+<!-- ── SCREEN: PROFILE ── -->
+<div class="screen" id="s-profile" style="background:var(--bg)">
+  <div style="background:linear-gradient(145deg,#4C1D95,#6C3CE1);padding:60px 24px 32px">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="av av-64" style="background:rgba(255,255,255,.2);color:#fff;font-size:22px">PS</div>
+      <div>
+        <p style="color:#fff;font-size:20px;font-weight:700">Priya Sharma</p>
+        <p style="color:rgba(255,255,255,.75);font-size:13px">priya.sharma@payzap</p>
+        <span class="badge" style="background:rgba(255,255,255,.2);color:#fff;margin-top:6px">✅ KYC Verified</span>
+      </div>
+    </div>
+  </div>
+  <div style="flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px">
+    <div class="card" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;background:#FFF7ED;border-color:#FDE68A" onclick="nav('rewards')">
+      <span style="font-size:22px">⭐</span>
+      <div style="flex:1"><p style="font-size:14px;font-weight:600;color:#92400E">1,250 Reward Points</p><p style="font-size:12px;color:#B45309">Tap to redeem · ≈ ₹12.50</p></div>
+      <svg style="width:16px;height:16px;stroke:#B45309;fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="card">
+      <div class="prow" onclick="showToast('🏦 Manage bank accounts')"><div class="prow-icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><span class="prow-label">Bank Accounts</span><div class="prow-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+      <div class="prow" onclick="showToast('🔐 Change UPI PIN')"><div class="prow-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><span class="prow-label">Change UPI PIN</span><div class="prow-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+      <div class="prow" onclick="showToast('⚡ UPI Lite: ₹500 balance')"><div class="prow-icon"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><span class="prow-label">UPI Lite</span><div class="prow-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+    </div>
+    <div class="card">
+      <div class="prow" onclick="showToast('🔔 Notification settings')"><div class="prow-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><span class="prow-label">Notifications</span><div class="prow-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+      <div class="prow" onclick="showToast('🛡️ Security settings')"><div class="prow-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><span class="prow-label">Security</span><div class="prow-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+      <div class="prow" onclick="showToast('📋 Transaction limits: ₹1L/txn')"><div class="prow-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><span class="prow-label">Transaction Limits</span><div class="prow-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+    </div>
+    <div class="card">
+      <div class="prow" onclick="showToast('❓ Help & support')"><div class="prow-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span class="prow-label">Help & Support</span><div class="prow-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+      <div class="prow" onclick="showToast('📞 Call: 1800-267-6789')"><div class="prow-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.62a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><span class="prow-label">Call Support</span><div class="prow-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+    </div>
+    <button class="btn btn-danger" style="margin-top:4px" onclick="showToast('👋 Signed out successfully!')">Sign Out</button>
+    <p style="font-size:11px;color:var(--t3);text-align:center;margin-top:4px">PayZap v1.0.0 · Built with ❤️ in India</p>
+  </div>
+</div>
+
+</div><!-- /phone -->
+</div><!-- /shell -->
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────
+const CONTACTS=[
+  {name:'Rahul Verma',upi:'rahul.v@hdfc',initials:'RV',color:'#2563EB',last:'₹500'},
+  {name:'Anjali Singh',upi:'anjali@sbi',initials:'AS',color:'#059669',last:'₹1,200'},
+  {name:'Vikram Nair',upi:'vikram.nair@icici',initials:'VN',color:'#D97706',last:'₹200'},
+  {name:'Meera Kapoor',upi:'meera.k@axis',initials:'MK',color:'#DC2626',last:'₹800'},
+  {name:'Zaid Khan',upi:'zaid@kotak',initials:'ZK',color:'#7C3AED',last:'₹300'},
+];
+
+const TRANSACTIONS=[
+  {name:'Rahul Verma',upi:'rahul.v@hdfc',initials:'RV',color:'#2563EB',type:'sent',amt:500,date:'Today · 10:42 AM',icon:'💸',cat:'transfer',status:'success'},
+  {name:'Electricity Bill',upi:'BESCOM',initials:'⚡',color:'#D97706',type:'bill',amt:1340,date:'Yesterday · 3:15 PM',icon:'⚡',cat:'bill',status:'success'},
+  {name:'Anjali Singh',upi:'anjali@sbi',initials:'AS',color:'#059669',type:'received',amt:1200,date:'23 Nov · 11:00 AM',icon:'💰',cat:'transfer',status:'success'},
+  {name:'Jio Recharge',upi:'jio@paytm',initials:'📱',color:'#2563EB',type:'bill',amt:299,date:'22 Nov · 8:30 PM',icon:'📱',cat:'recharge',status:'success'},
+  {name:'Meera Kapoor',upi:'meera.k@axis',initials:'MK',color:'#DC2626',type:'received',amt:800,date:'21 Nov · 6:45 PM',icon:'💰',cat:'transfer',status:'success'},
+  {name:'Zomato',upi:'zomato@icici',initials:'Z',color:'#FF3008',type:'sent',amt:347,date:'20 Nov · 1:20 PM',icon:'🍕',cat:'food',status:'success'},
+  {name:'Vikram Nair',upi:'vikram.nair@icici',initials:'VN',color:'#D97706',type:'sent',amt:200,date:'19 Nov · 5:10 PM',icon:'💸',cat:'transfer',status:'failed'},
+  {name:'Water Board',upi:'bwssb@upi',initials:'💧',color:'#2563EB',type:'bill',amt:480,date:'18 Nov · 9:00 AM',icon:'💧',cat:'bill',status:'success'},
+];
+
+const CHAT_RESPONSES={
+  'check my balance':'Your current bank balance is ₹24,850.00. Would you like to refresh it?',
+  'why did my payment fail':'Payments can fail due to: incorrect UPI PIN, daily limit exceeded, network issues, or insufficient balance. Your last failed txn to Vikram Nair of ₹200 was due to a temporary server error — you can retry now.',
+  'how to get cashback':'You can earn cashback by: using offer codes (BILL10 for 10% on bills), paying bills, recharging, and referring friends. Check the Rewards section for active offers!',
+  'what is upi lite':'UPI Lite is a feature that lets you make small payments up to ₹500 without entering a PIN, using a pre-loaded wallet. Your current UPI Lite balance is ₹500. It\'s faster and works even with slow internet!',
+};
+
+// ── STATE ──────────────────────────────────────────────────────
+let pinSetupPhase='create',pinSetupFirst='',pinSetupCurrent='';
+let payPinCurrent='';
+let savedPin='123456';
+let balVisible=true;
+let selectedPlanData=null;
+let selectedBillProvider='';
+let selectedBillType='';
+let chatHistory=[];
+let analyticsVisible=false;
+
+// ── NAVIGATION ────────────────────────────────────────────────
+function nav(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const target=document.getElementById('s-'+screen);
+  if(target){target.classList.add('active');target.scrollTop=0;}
+  if(screen==='home'){renderHomeTxns();updateNavTabs('home');}
+  if(screen==='history'){renderHistory('all');}
+}
+
+function navTab(tab){
+  if(tab==='history'||tab==='chat'||tab==='profile'){nav(tab);return;}
+  nav(tab);
+  updateNavTabs(tab);
+}
+
+function updateNavTabs(active){
+  document.querySelectorAll('.nav-item').forEach((el,i)=>{
+    const tabs=['home','history','','chat','profile'];
+    el.classList.toggle('active',tabs[i]===active);
+  });
+}
+
+// ── LOGIN / OTP ───────────────────────────────────────────────
+function goOTP(){
+  const ph=document.getElementById('phone-input').value;
+  if(ph.length<10){showToast('⚠️ Enter a valid 10-digit number');return;}
+  document.getElementById('otp-phone').textContent=ph||'XXXXXXXXXX';
+  nav('otp');
+  document.querySelectorAll('.otp-box')[0].focus();
+  startResendTimer();
+}
+
+function startResendTimer(){
+  let t=30;
+  const el=document.getElementById('resend-timer');
+  const iv=setInterval(()=>{el.textContent=--t+'s';if(t<=0){clearInterval(iv);el.textContent='Resend';}},1000);
+}
+
+function otpInput(inp){
+  inp.classList.toggle('filled',inp.value.length>0);
+  if(inp.value&&inp.dataset.idx<5){
+    document.querySelectorAll('.otp-box')[+inp.dataset.idx+1].focus();
+  }
+}
+
+function otpKey(e,inp){
+  if(e.key==='Backspace'&&!inp.value&&inp.dataset.idx>0){
+    const prev=document.querySelectorAll('.otp-box')[+inp.dataset.idx-1];
+    prev.value='';prev.classList.remove('filled');prev.focus();
+  }
+}
+
+function verifyOTP(){
+  const boxes=document.querySelectorAll('.otp-box');
+  const code=[...boxes].map(b=>b.value).join('');
+  if(code.length<6){showToast('⚠️ Enter all 6 digits');return;}
+  showToast('✅ OTP verified!');
+  setTimeout(()=>nav('pin-setup'),600);
+}
+
+// ── PIN SETUP ─────────────────────────────────────────────────
+function pinKey(k){
+  if(k==='⌫'){pinSetupCurrent=pinSetupCurrent.slice(0,-1);}
+  else if(pinSetupCurrent.length<6){pinSetupCurrent+=k;}
+  renderPinDots('pin-setup-dots',pinSetupCurrent.length);
+  if(pinSetupCurrent.length===6){
+    if(pinSetupPhase==='create'){
+      pinSetupFirst=pinSetupCurrent;pinSetupCurrent='';
+      pinSetupPhase='confirm';
+      document.getElementById('pin-setup-title').textContent='Confirm UPI PIN';
+      document.getElementById('pin-setup-sub').textContent='Re-enter your PIN to confirm';
+      renderPinDots('pin-setup-dots',0);
+    } else {
+      if(pinSetupCurrent===pinSetupFirst){
+        savedPin=pinSetupFirst;
+        showToast('🔐 UPI PIN set successfully!');
+        setTimeout(()=>nav('home'),700);
+      } else {
+        document.querySelectorAll('#pin-setup-dots .pin-dot').forEach(d=>d.classList.add('shake'));
+        setTimeout(()=>{
+          document.querySelectorAll('#pin-setup-dots .pin-dot').forEach(d=>d.classList.remove('shake'));
+          pinSetupCurrent='';pinSetupFirst='';pinSetupPhase='create';
+          document.getElementById('pin-setup-title').textContent='Create UPI PIN';
+          document.getElementById('pin-setup-sub').textContent='Set a 6-digit PIN to authorise payments';
+          renderPinDots('pin-setup-dots',0);
+        },800);
+      }
+    }
+  }
+}
+
+// ── PAY PIN ───────────────────────────────────────────────────
+function payPinKey(k){
+  if(k==='⌫'){payPinCurrent=payPinCurrent.slice(0,-1);}
+  else if(payPinCurrent.length<6){payPinCurrent+=k;}
+  renderPinDots('pay-pin-dots',payPinCurrent.length);
+  if(payPinCurrent.length===6){
+    if(payPinCurrent===savedPin){
+      payPinCurrent='';renderPinDots('pay-pin-dots',0);processPayment();
+    } else {
+      document.querySelectorAll('#pay-pin-dots .pin-dot').forEach(d=>d.classList.add('shake'));
+      setTimeout(()=>{
+        document.querySelectorAll('#pay-pin-dots .pin-dot').forEach(d=>d.classList.remove('shake'));
+        payPinCurrent='';renderPinDots('pay-pin-dots',0);
+        showToast('❌ Wrong PIN. Try again');
+      },700);
+    }
+  }
+}
+
+function renderPinDots(id,count){
+  document.querySelectorAll('#'+id+' .pin-dot').forEach((d,i)=>d.classList.toggle('filled',i<count));
+}
+
+// ── SEND MONEY ────────────────────────────────────────────────
+function renderContactList(){
+  const el=document.getElementById('contact-list');
+  if(!el)return;
+  el.innerHTML=CONTACTS.map(c=>`
+    <div onclick="selectContact('${c.upi}','${c.name}')" style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer">
+      <div class="av av-44" style="background:${c.color};color:#fff">${c.initials}</div>
+      <div style="flex:1"><p style="font-size:14px;font-weight:600;color:var(--t1)">${c.name}</p><p style="font-size:12px;color:var(--t3)">${c.upi}</p></div>
+      <span style="font-size:12px;color:var(--t3)">${c.last}</span>
+    </div>`).join('');
+}
+
+function selectContact(upi,name){
+  document.getElementById('recv-upi').value=upi;
+  goSendAmount(upi,name);
+}
+
+function goSendAmount(upi,name){
+  const u=upi||document.getElementById('recv-upi').value.trim();
+  if(!u){showToast('⚠️ Enter a UPI ID');return;}
+  const n=name||(CONTACTS.find(c=>c.upi===u)?.name||'User');
+  const initials=n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const color=CONTACTS.find(c=>c.upi===u)?.color||'#6C3CE1';
+  document.getElementById('send-recv-av').textContent=initials;
+  document.getElementById('send-recv-av').style.background=color;
+  document.getElementById('send-recv-name').textContent=n;
+  document.getElementById('send-recv-upi').textContent=u;
+  showSendStep('amount');
+}
+
+function goSendConfirm(){
+  const amt=document.getElementById('send-amount').value;
+  if(!amt||+amt<=0){showToast('⚠️ Enter a valid amount');return;}
+  if(+amt>100000){showToast('⚠️ Max ₹1,00,000 per transaction');return;}
+  const note=document.getElementById('send-note').value;
+  const name=document.getElementById('send-recv-name').textContent;
+  const upi=document.getElementById('send-recv-upi').textContent;
+  const initials=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const color=CONTACTS.find(c=>c.upi===upi)?.color||'#6C3CE1';
+  document.getElementById('confirm-av').textContent=initials;
+  document.getElementById('confirm-av').style.background=color;
+  document.getElementById('confirm-name2').textContent=name;
+  document.getElementById('confirm-upi2').textContent=upi;
+  document.getElementById('confirm-amt').textContent='₹'+parseFloat(amt).toLocaleString('en-IN');
+  document.getElementById('confirm-note2').textContent=note||'';
+  const isNew=!CONTACTS.find(c=>c.upi===upi);
+  document.getElementById('fraud-warn').style.display=isNew?'block':'none';
+  document.getElementById('pay-pin-sub').textContent=`Paying ₹${parseFloat(amt).toLocaleString('en-IN')} to ${name}`;
+  showSendStep('confirm');
+}
+
+function showSendStep(step){
+  ['receiver','amount','confirm'].forEach(s=>{
+    const el=document.getElementById('send-step-'+s);
+    if(el){el.style.display=s===step?'flex':'none';}
+  });
+  if(step==='receiver'){renderContactList();}
+}
+
+function processPayment(){
+  const amt=document.getElementById('send-amount').value;
+  const name=document.getElementById('send-recv-name').textContent;
+  const upi=document.getElementById('send-recv-upi').textContent;
+  const cashback=Math.floor(+amt*0.01);
+  const ref='TXN'+Date.now().toString(36).toUpperCase();
+  document.getElementById('success-amt').textContent='₹'+parseFloat(amt).toLocaleString('en-IN');
+  document.getElementById('success-to').textContent='Sent to '+name;
+  document.getElementById('success-ref').textContent='Ref: '+ref;
+  if(cashback>0){
+    document.getElementById('success-cashback').style.display='block';
+    document.getElementById('cashback-amt').textContent=cashback;
+  } else {
+    document.getElementById('success-cashback').style.display='none';
+  }
+  TRANSACTIONS.unshift({name,upi,initials:name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(),color:CONTACTS.find(c=>c.upi===upi)?.color||'#6C3CE1',type:'sent',amt:+amt,date:'Just now',icon:'💸',cat:'transfer',status:'success'});
+  nav('success');
+}
+
+// ── HOME TRANSACTIONS ────────────────────────────────────────
+function renderHomeTxns(){
+  const el=document.getElementById('home-txns');
+  if(!el)return;
+  el.innerHTML=TRANSACTIONS.slice(0,4).map(t=>txnHTML(t)).join('');
+}
+
+function txnHTML(t){
+  const isOut=t.type==='sent'||t.type==='bill'||t.type==='recharge';
+  const sign=isOut?'-':'+';
+  const color=isOut?'var(--r)':'var(--g)';
+  const statusBadge=t.status==='failed'?'<span class="badge badge-red" style="margin-left:4px;font-size:10px">Failed</span>':'';
+  return `<div class="txn-item">
+    <div class="txn-icon" style="background:${t.color}18;font-size:22px;flex-shrink:0">${typeof t.initials==='string'&&t.initials.length<=2?`<div class="av" style="width:44px;height:44px;background:${t.color};color:#fff;font-size:13px;font-weight:700;border-radius:14px;display:flex;align-items:center;justify-content:center">${t.initials}</div>`:t.icon}</div>
+    <div class="txn-info"><p class="txn-name">${t.name}${statusBadge}</p><p class="txn-meta">${t.date}</p></div>
+    <div class="txn-amt"><p class="amt ${isOut?'out':'in'}">${sign}₹${t.amt.toLocaleString('en-IN')}</p></div>
+  </div>`;
+}
+
+// ── HISTORY ──────────────────────────────────────────────────
+function renderHistory(filter){
+  const el=document.getElementById('hist-list');
+  if(!el)return;
+  const filtered=filter==='all'?TRANSACTIONS:TRANSACTIONS.filter(t=>{
+    if(filter==='sent')return t.type==='sent';
+    if(filter==='received')return t.type==='received';
+    if(filter==='bills')return t.type==='bill'||t.type==='recharge';
+    return true;
+  });
+  el.innerHTML=filtered.map(t=>txnHTML(t)).join('')||'<p style="text-align:center;color:var(--t3);padding:24px;font-size:13px">No transactions found</p>';
+}
+
+function filterTxn(el,filter){
+  document.querySelectorAll('.htab').forEach(t=>{
+    t.style.background=t===el?'var(--p)':'var(--bg)';
+    t.style.color=t===el?'#fff':'var(--t2)';
+    t.style.border=t===el?'none':'1px solid var(--border)';
+  });
+  renderHistory(filter);
+}
+
+function toggleAnalytics(){
+  analyticsVisible=!analyticsVisible;
+  document.getElementById('analytics-panel').style.display=analyticsVisible?'block':'none';
+}
+
+// ── BALANCE TOGGLE ────────────────────────────────────────────
+function toggleBal(){
+  balVisible=!balVisible;
+  document.getElementById('bal-display').textContent=balVisible?'₹24,850.00':'₹ ••••••';
+  document.getElementById('bal-toggle-btn').textContent=balVisible?'Hide':'Show';
+}
+
+// ── BILLS ─────────────────────────────────────────────────────
+const BILL_PROVIDERS={
+  electricity:['BESCOM','MSEB','TSSPDCL','KSEB','MSEDCL'],
+  water:['BWSSB','MJP','HMWSSB','GWSSB'],
+  gas:['IGL','MGL','Adani Gas','Mahanagar Gas'],
+  broadband:['ACT Fibernet','Airtel Xstream','Jio Fiber','BSNL'],
+  dth:['Tata Play','Dish TV','Airtel Digital','Sun Direct'],
+  loan:['HDFC Loan','SBI Loan','ICICI Loan','Bajaj Finance'],
+};
+
+function showBill(type){
+  selectedBillType=type;
+  document.getElementById('bills-title').textContent=
+    {electricity:'Electricity',water:'Water Bill',gas:'Gas Bill',broadband:'Broadband',dth:'DTH',loan:'Loan EMI'}[type]||'Pay Bills';
+  const providers=BILL_PROVIDERS[type]||[];
+  document.getElementById('bill-providers').innerHTML=providers.map(p=>
+    `<span onclick="selectBillProvider(this,'${p}')" style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:13px;font-weight:500;cursor:pointer;color:var(--t2)">${p}</span>`
+  ).join('');
+  document.getElementById('bill-summary').style.display='none';
+  document.getElementById('bills-type-select').style.display='none';
+  document.getElementById('bills-detail').style.display='flex';
+  nav('bills');
+}
+
+function selectBillProvider(el,prov){
+  selectedBillProvider=prov;
+  document.querySelectorAll('#bill-providers span').forEach(s=>{
+    s.style.borderColor=s===el?'var(--p)':'var(--border)';
+    s.style.color=s===el?'var(--p)':'var(--t2)';
+    s.style.background=s===el?'var(--pbg)':'transparent';
+  });
+}
+
+function fetchBill(){
+  if(!selectedBillProvider){showToast('⚠️ Select a provider first');return;}
+  const amt=Math.floor(Math.random()*2000+200);
+  document.getElementById('bill-amount-display').textContent='₹'+amt.toLocaleString('en-IN');
+  document.getElementById('bill-prov-display').textContent=selectedBillProvider;
+  document.getElementById('bill-summary').style.display='block';
+  document.getElementById('bill-summary').dataset.amt=amt;
+  showToast('📄 Bill fetched successfully!');
+}
+
+function payBillNow(){
+  const amt=document.getElementById('bill-summary').dataset.amt;
+  document.getElementById('send-amount').value=amt;
+  document.getElementById('send-recv-name').textContent=selectedBillProvider;
+  document.getElementById('send-recv-upi').textContent=selectedBillProvider.toLowerCase().replace(/\s/g,'')+'@upi';
+  document.getElementById('pay-pin-sub').textContent=`Paying ₹${parseInt(amt).toLocaleString('en-IN')} to ${selectedBillProvider}`;
+  nav('pin-pay');
+}
+
+// ── RECHARGE ──────────────────────────────────────────────────
+function selectOp(el,op){
+  document.querySelectorAll('.op-pill').forEach(p=>{
+    p.style.borderColor=p===el?'var(--p)':'var(--border)';
+    p.style.color=p===el?'var(--p)':'var(--t2)';
+    p.style.background=p===el?'var(--pbg)':'transparent';
+  });
+}
+
+function selectPlan(el,amt,validity,data){
+  selectedPlanData={amt,validity,data};
+  document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('rech-pay-btn').style.display='block';
+  document.getElementById('rech-pay-btn').textContent=`Recharge ₹${amt} — ${validity}`;
+}
+
+function payRecharge(){
+  if(!selectedPlanData){return;}
+  const mobile=document.getElementById('rech-mobile').value;
+  if(mobile.length!==10){showToast('⚠️ Enter a valid 10-digit number');return;}
+  document.getElementById('send-amount').value=selectedPlanData.amt;
+  document.getElementById('send-recv-name').textContent='Mobile Recharge '+mobile;
+  document.getElementById('send-recv-upi').textContent='recharge@payzap';
+  document.getElementById('pay-pin-sub').textContent=`Recharging ${mobile} for ₹${selectedPlanData.amt}`;
+  nav('pin-pay');
+}
+
+// ── REQUEST ───────────────────────────────────────────────────
+function sendRequest(){
+  const upi=document.getElementById('req-upi').value.trim();
+  const amt=document.getElementById('req-amount').value;
+  if(!upi){showToast('⚠️ Enter a UPI ID');return;}
+  if(!amt||+amt<=0){showToast('⚠️ Enter a valid amount');return;}
+  showToast('✅ Payment request of ₹'+parseFloat(amt).toLocaleString('en-IN')+' sent to '+upi);
+  setTimeout(()=>nav('home'),1000);
+}
+
+// ── QR DEMO ───────────────────────────────────────────────────
+function demoScan(){
+  showToast('📷 Scanned: rahul.v@hdfc');
+  setTimeout(()=>{nav('send');showSendStep('amount');document.getElementById('send-recv-name').textContent='Rahul Verma';document.getElementById('send-recv-upi').textContent='rahul.v@hdfc';document.getElementById('send-recv-av').textContent='RV';document.getElementById('send-recv-av').style.background='#2563EB';},800);
+}
+
+// ── CHAT ─────────────────────────────────────────────────────
+const BOT_REPLIES=[
+  "I can help you with that! Let me check your account details.",
+  "Great question! In PayZap, you can set up autopay for recurring payments.",
+  "Your last 5 transactions are shown on the home screen. Tap 'See all' for the full history.",
+  "For security, I cannot access your PIN or account password. Please use the in-app options.",
+  "UPI payments are instant — money transfers happen in seconds, 24/7 including holidays!",
+  "Cashback is credited within 24 hours of a successful transaction. Check Rewards section.",
+  "To raise a dispute, go to History → tap the transaction → 'Raise Issue'.",
+];
+
+function sendChat(){
+  const inp=document.getElementById('chat-input');
+  const msg=inp.value.trim();
+  if(!msg)return;
+  addChatBubble(msg,'user');
+  inp.value='';
+  document.getElementById('chat-suggestions').style.display='none';
+  setTimeout(()=>{
+    const lower=msg.toLowerCase();
+    let reply=null;
+    for(const[key,val] of Object.entries(CHAT_RESPONSES)){
+      if(lower.includes(key)){reply=val;break;}
+    }
+    if(!reply)reply=BOT_REPLIES[Math.floor(Math.random()*BOT_REPLIES.length)];
+    addChatBubble(reply,'bot');
+  },900);
+}
+
+function chatSuggest(el){
+  document.getElementById('chat-input').value=el.textContent;
+  sendChat();
+}
+
+function addChatBubble(text,role){
+  const area=document.getElementById('chat-area');
+  const msgs=area.querySelector('.chat-messages');
+  const el=document.createElement('div');
+  el.className='chat-bubble '+role;
+  el.textContent=text;
+  msgs.appendChild(el);
+  area.scrollTop=area.scrollHeight;
+}
+
+function startVoice(){showToast('🎙️ Voice assistant coming soon!');}
+
+// ── TOAST ─────────────────────────────────────────────────────
+let toastTimer=null;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+renderContactList();
+renderHomeTxns();
+showSendStep('receiver');
+
+// Auto-fill OTP on focus for demo
+document.querySelectorAll('.otp-box')[0]?.addEventListener('focus',()=>{
+  const boxes=document.querySelectorAll('.otp-box');
+  boxes.forEach((b,i)=>{b.value='';b.classList.remove('filled');});
+});
+</script>
+</body>
+</html>
